@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Contact Owner</title>
+    <title>{{ $data['object'] }}</title>
 </head>
 <body>
-    <h1>Contact Owner Email</h1>
+    <h1>{{ $data['object'] }}</h1>
     <p>{{ $data['content'] }}</p>
+    <small>Message from : {{ $data['name'] }} - {{ $data['mail'] }}</small>
 </body>
 </html>

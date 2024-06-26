@@ -15,7 +15,7 @@ Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanc
 Route::get('/users', [UserController::class, 'index']);
 Route::get('/users/{id}', [UserController::class, 'show']);
 
-Route::get("/mail-contact", [EmailController::class, 'sendEmailContactOwner']);
+Route::post("/mail-contact", [EmailController::class, 'sendEmailContactOwner']);
 
 Route::get('/subscriptions', [SubscriptionController::class, 'index']);
 Route::get('/subscriptions/{id}', [SubscriptionController::class, 'show']);

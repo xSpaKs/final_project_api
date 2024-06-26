@@ -11,8 +11,10 @@ class EmailController extends Controller
     public function sendEmailContactOwner(Request $request)
     {
         $data = [
-            'mail' => 'mail.client@gmail.com',
-            'content' => 'Salut mon pote',
+            'name' => $request->name,
+            'mail' => $request->email,
+            'object' => $request->object,
+            'content' => $request->message,
         ];
 
         Mail::to(env('MAIL_OWNER'))->send(new ContactOwner($data));
