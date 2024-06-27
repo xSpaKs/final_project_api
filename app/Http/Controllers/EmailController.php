@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Mail\ContactOwner;
+use App\Mail\Register;
 use Illuminate\Support\Facades\Mail;
 
 class EmailController extends Controller
@@ -22,23 +23,16 @@ class EmailController extends Controller
         return response()->json(['message' => 'Email sent successfully!']);
     }
 
-    public function sendEmailPurchase(Request $request)
-    {
-        
-
-        Mail::to(env('MAIL_OWNER'))->send(new PurchaseOwner($data));
-        Mail::to(env('mail.client@gmail.com'))->send(new PurchaseOwner($data));
-
-        return response()->json(['message' => 'Email sent successfully!']);
-    }
-
-    public function sendEmailPurchaseOwner()
+    public function sendEmailRegister($mail)
     {
         $data = [
-            'mail' => 'espace-client@gmail.com',
-            'content' => 'Salut mon pote',
+            'mail' => "planetary@gmail.com",
+            'object' => "Bienvenue sur Planetary",
+            'content' => "Bienvenue sur Planetary, votre compte a bien été enregistré !",
         ];
-        
-        Mail::to(env('MAIL_OWNER'))->send(new PurchaseOwner($data));
+
+        Mail::to($mail)->send(new Register($data));
+
+        return response()->json(['message' => 'Email sent successfully!']);
     }
 }

@@ -10,7 +10,7 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class ContactOwner extends Mailable
+class Register extends Mailable
 {
     use Queueable, SerializesModels;
 
@@ -41,7 +41,7 @@ class ContactOwner extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'emails.contactOwner',
+            view: 'emails.register',
             with: ['data' => $this->data],
         );
     }

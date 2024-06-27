@@ -17,7 +17,6 @@ Route::get('/users/{id}', [UserController::class, 'show']);
 
 Route::post("/mail-contact", [EmailController::class, 'sendEmailContactOwner']);
 
-Route::get('/subscriptions', [SubscriptionController::class, 'index']);
-Route::get('/subscriptions/{id}', [SubscriptionController::class, 'show']);
-
 Route::post('/stripe/checkout', [StripeController::class, 'checkout'])->middleware('auth:sanctum');
+Route::get('/stripe/subscriptions', [StripeController::class, 'subscriptions']);
+Route::get('/subscriptions/{id}', [SubscriptionController::class, 'subscription']);
