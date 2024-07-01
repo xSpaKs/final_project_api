@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
@@ -34,17 +35,36 @@ class UserController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show($id)
+    public function user($id)
     {
-        return User::find($id);
+        return User::where("id", $id)->first();
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(User $user)
+    public function modifyUser(Request $request)
     {
-        //
+        if ($request->name == null && $request->email == null && $request->password == null) { return response()->json(['Error' => "Empty credentials"], 422);
+    }
+
+        $request->validate([
+            "name" => "string|nullable",
+            "email" => "email|nullable",
+            "password" => "min:8|nullable",
+        ]);
+
+        $user = User::find($request->id);
+
+        if (!$user) { return response()->json(['error' => "User does not exist"], 404); }
+
+        if (!empty($request->name)) { $user->name = $request->name; }
+        if (!empty($request->email)) { $user->email = $request->email; }
+        if (!empty($request->password)) { $user->password = Hash::make($request->password); }
+
+        $user->save();
+
+        return response()->json($user, 200);
     }
 
     /**
