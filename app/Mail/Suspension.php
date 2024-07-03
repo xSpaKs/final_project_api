@@ -10,7 +10,7 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class PurchaseClient extends Mailable
+class Suspension extends Mailable
 {
     use Queueable, SerializesModels;
 
@@ -31,7 +31,7 @@ class PurchaseClient extends Mailable
     {
         return new Envelope(
             from: new Address($this->data["mail"]),
-            subject: 'Purchase Client',
+            subject: "Suspension",
         );
     }
 
@@ -41,7 +41,7 @@ class PurchaseClient extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'view.purchaseClient',
+            view: 'emails.suspension',
             with: ['data' => $this->data],
         );
     }

@@ -6,6 +6,13 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Payment;
 
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+
+use App\Mail\Purchase;
+use App\Mail\Suspension;
+use App\Mail\Reactivation;
+
 use Stripe\Product;
 use Stripe\Stripe;
 use Stripe\Checkout\Session;
@@ -13,7 +20,7 @@ use Stripe\Price;
 use Stripe\StripeClient;
 use Stripe\Webhook;
 use Stripe\Exception\SignatureVerificationException;
-use Illuminate\Support\Facades\Log;
+
 
 class StripeController extends Controller
 {
@@ -95,20 +102,32 @@ class StripeController extends Controller
         if ($event->type == "checkout.session.completed") {
             $userId = $event->data->object->metadata->user_id;
             $stripeCustomerId = $event->data->object->customer;
-           
-            $subscriptionId = $event->data->object->subscription;
-            $price = $event->data->object->amount_total;
-
-            Payment::where('user_id', -1)->update(['user_id' => $userId]);
-            User::where('id', $userId)->update(['stripe_customer_id' => $stripeCustomerId]);
             
+            Payment::where('user_id', -1)->update(['user_id' => $userId]);
+            $user = User::where('id', $userId)->first();
+            $user->update(['stripe_customer_id' => $stripeCustomerId]);
+
+            $data = [
+                'mail' => "planetary@gmail.com",
+                'content' => "You have subscribed to a new planet ! Check out your user page for more informations."
+            ];
+    
+            Mail::to($user->email)->send(new Purchase($data));
         }
 
         if ($event->type == "customer.subscription.updated" && $event->data->object->cancel_at_period_end == true) {
             $subscriptionId = $event->data->object->items->data[0]->price->product;
             $userId = User::where("stripe_customer_id", $event->data->object->customer)->first()->id;
             
+            $user = User::where('id', $userId)->first();
             Payment::where("user_id", $userId)->where("subscription_id", $subscriptionId)->delete();
+
+            $data = [
+                'mail' => "planetary@gmail.com",
+                'content' => "You have suspended one of your subscription :( \nBut don't worry, you can reactive it at any moment on your user page."
+            ];
+    
+            Mail::to($user->email)->send(new Suspension($data));
         }
 
         if ($event->type == "customer.subscription.updated" && $event->data->object->cancel_at_period_end == false) {
@@ -119,6 +138,7 @@ class StripeController extends Controller
             $price = $event->data->object->items->data[0]->price->unit_amount;
             $interval = $event->data->object->items->data[0]->plan->interval;
 
+            $user = User::where('id', $userId)->first();
             Payment::create([
                 "user_id" => $userId,
                 "subscription_id" => $subscriptionId,
@@ -126,6 +146,13 @@ class StripeController extends Controller
                 "price" => $price,
                 "interval" => $interval,
             ]);
+
+            $data = [
+                'mail' => "planetary@gmail.com",
+                'content' => "You have reactivated one of your subscription :) \nCheck out your user page for more informations."
+            ];
+    
+            Mail::to($user->email)->send(new Reactivation($data));
         }
 
         http_response_code(200);
