@@ -3,37 +3,149 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\User;
+use App\Models\Payment;
+
 use Stripe\Product;
 use Stripe\Stripe;
 use Stripe\Checkout\Session;
 use Stripe\Price;
+use Stripe\StripeClient;
+use Stripe\Webhook;
+use Stripe\Exception\SignatureVerificationException;
+use Illuminate\Support\Facades\Log;
 
 class StripeController extends Controller
 {
     public function checkout(Request $request) {
         $request->validate([
-            'product' => 'required|string'
+            'product' => 'required|string',
+            'subscription_type' => 'required|in:month,year',
+            'discount' => 'sometimes|required',
         ]);
-
 
         Stripe::setApiKey(getenv("STRIPE_SECRET"));
 
         $product = Product::retrieve($request->product);
-        
-        return response()->json($product);
 
-        $stripeCheckoutSession = \Stripe\Checkout\Session::create([
+        $prices = Price::all(['product' => $product->id])->data;
+
+        $price = $request->subscription_type == "year" ? $prices[0] : $prices[1];
+
+        $stripeCheckoutSession = Session::create([
           'line_items' => [[
-            'price' => $product->stripe_price_id,
+            'price' => $price->id,
             'quantity' => 1,
           ]],
           'mode' => 'subscription',
           'allow_promotion_codes' => true,
-          'success_url' => route('stripe.success'),
-          'cancel_url' => route('stripe.cancel')
+          'metadata' => [
+                'user_id' => $request->user()->id
+            ],
+          'success_url' => 'http://localhost:5173/checkout/success', 
+          'cancel_url' => 'http://localhost:5173/checkout/cancel', 
         ]);
 
-        return redirect($stripeCheckoutSession->url);
+        return response()->json(['url' => $stripeCheckoutSession->url]);
+    }
+
+    public function webhook() {
+        Stripe::setApiKey(getenv("STRIPE_SECRET"));
+
+        $stripe = new StripeClient(getenv("STRIPE_SECRET"));
+
+        $endpoint_secret = getenv("STRIPE_WEBHOOK_SECRET");
+
+        $payload = @file_get_contents('php://input');
+        $sig_header = $_SERVER['HTTP_STRIPE_SIGNATURE'];
+        $event = null;
+
+        try {
+          $event = Webhook::constructEvent(
+            $payload, $sig_header, $endpoint_secret
+          );
+          
+        } catch(\UnexpectedValueException $e) {
+          // Invalid payload
+          http_response_code(400);
+          exit();
+        } catch(SignatureVerificationException $e) {
+          // Invalid signature
+          http_response_code(400);
+          exit();
+        }
+
+        Log::debug($event);
+
+        if ($event->type == "invoice.payment_succeeded") {
+            $subscriptionId = $event->data->object->lines->data[0]->price->product;
+            $name = Product::retrieve($subscriptionId)->name;
+            $price = $event->data->object->lines->data[0]->amount;
+            $interval = $event->data->object->lines->data[0]->plan->interval;
+            
+            Payment::create([
+                "user_id" => -1,
+                "subscription_id" => $subscriptionId,
+                "name" => $name,
+                "price" => $price,
+                "interval" => $interval,
+            ]);
+        }
+
+        if ($event->type == "checkout.session.completed") {
+            $userId = $event->data->object->metadata->user_id;
+            $stripeCustomerId = $event->data->object->customer;
+           
+            $subscriptionId = $event->data->object->subscription;
+            $price = $event->data->object->amount_total;
+
+            Payment::where('user_id', -1)->update(['user_id' => $userId]);
+            User::where('id', $userId)->update(['stripe_customer_id' => $stripeCustomerId]);
+            
+        }
+
+        if ($event->type == "customer.subscription.updated" && $event->data->object->cancel_at_period_end == true) {
+            $subscriptionId = $event->data->object->items->data[0]->price->product;
+            $userId = User::where("stripe_customer_id", $event->data->object->customer)->first()->id;
+            
+            Payment::where("user_id", $userId)->where("subscription_id", $subscriptionId)->delete();
+        }
+
+        if ($event->type == "customer.subscription.updated" && $event->data->object->cancel_at_period_end == false) {
+            
+            $userId = User::where("stripe_customer_id", $event->data->object->customer)->first()->id;
+            $subscriptionId = $event->data->object->items->data[0]->price->product;
+            $name = Product::retrieve($subscriptionId)->name;
+            $price = $event->data->object->items->data[0]->price->unit_amount;
+            $interval = $event->data->object->items->data[0]->plan->interval;
+
+            Payment::create([
+                "user_id" => $userId,
+                "subscription_id" => $subscriptionId,
+                "name" => $name,
+                "price" => $price,
+                "interval" => $interval,
+            ]);
+        }
+
+        http_response_code(200);
+    }
+
+    public function customer(Request $request) {
+        $stripe = new StripeClient(getenv("STRIPE_SECRET"));
+
+        $stripeCustomerId = $request->user()->stripe_customer_id;
+
+        if (!$stripeCustomerId) {
+            return response()->json(['error' => "User does not have a subscription"], 400);
+        }
+
+        $customerPortal = $stripe->billingPortal->sessions->create([
+            'customer' => $stripeCustomerId,
+            'return_url' => 'http://localhost:5173/user',
+        ]);
+
+        return response()->json(['url' => $customerPortal->url]);
     }
 
     public function subscriptions(Request $request)

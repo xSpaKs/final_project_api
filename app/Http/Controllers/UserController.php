@@ -64,6 +64,11 @@ class UserController extends Controller
 
         $user->save();
 
+        $user->tokens()->where("name", "client")->delete();
+        $token = $user->createToken("client");
+
+        $user->token = $token->plainTextToken;
+
         return response()->json($user, 200);
     }
 

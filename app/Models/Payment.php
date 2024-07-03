@@ -5,12 +5,15 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Discount extends Model
+class Payment extends Model
 {
     use HasFactory;
 
     protected $fillable = [
+        'user_id',
+        'subscription_id',
         'name',
-        'amount',
+        'price',
+        'interval',
     ];
 }
