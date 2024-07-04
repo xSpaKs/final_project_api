@@ -6,6 +6,7 @@ use App\Http\Controllers\{ UserController, SubscriptionController, EmailControll
 
 Route::post('/user', [UserController::class, 'user'])->middleware('auth:sanctum');
 Route::post('/modify-user', [UserController::class, 'modifyUser'])->middleware('auth:sanctum');
+Route::post('delete-account', [UserController::class, 'deleteAccount'])->middleware('auth:sanctum');
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
@@ -22,4 +23,4 @@ Route::get('/stripe/subscriptions/{id}', [StripeController::class, 'subscription
 Route::get('/news', [NewsController::class, 'news']);
 Route::get('/news/{id}', [NewsController::class, 'singleNews']);
 
-Route::post("/paymentsFromUser", [PaymentController::class, 'paymentsFromUser'])->middleware('auth:sanctum');
+Route::post("/payments-from-user", [PaymentController::class, 'paymentsFromUser'])->middleware('auth:sanctum');
