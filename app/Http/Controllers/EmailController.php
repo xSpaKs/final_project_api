@@ -11,6 +11,14 @@ class EmailController extends Controller
 {
     public function sendEmailContactOwner(Request $request)
     {
+        // Check data from request
+        $request->validate([
+            "name" => "required",
+            "email" => "required|email",
+            "object" => "required",
+            "message" => "required|min:50",
+        ]);
+
         $data = [
             'name' => $request->name,
             'mail' => $request->email,
@@ -18,6 +26,7 @@ class EmailController extends Controller
             'content' => $request->message,
         ];
 
+        // Send mail with request's data
         Mail::to(env('MAIL_OWNER'))->send(new ContactOwner($data));
 
         return response()->json(['message' => 'Email sent successfully!']);

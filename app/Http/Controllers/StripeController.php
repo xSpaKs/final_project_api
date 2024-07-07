@@ -25,20 +25,23 @@ use Stripe\Exception\SignatureVerificationException;
 class StripeController extends Controller
 {
     public function checkout(Request $request) {
+        
+        // Check data from request
         $request->validate([
             'product' => 'required|string',
             'subscription_type' => 'required|in:month,year',
             'discount' => 'sometimes|required',
         ]);
 
-        Stripe::setApiKey(getenv("STRIPE_SECRET"));
+        Stripe::setApiKey(getenv("STRIPE_SECRET")); // Setup Stripe environment
 
-        $product = Product::retrieve($request->product);
+        $product = Product::retrieve($request->product); // Get product from database
 
-        $prices = Price::all(['product' => $product->id])->data;
+        $prices = Price::all(['product' => $product->id])->data; // Get associated prices
 
-        $price = $request->subscription_type == "year" ? $prices[0] : $prices[1];
+        $price = $request->subscription_type == "year" ? $prices[0] : $prices[1]; // Choose price depending on user's choice
 
+        // Create a Stripe session
         $stripeCheckoutSession = Session::create([
           'line_items' => [[
             'price' => $price->id,
@@ -56,6 +59,7 @@ class StripeController extends Controller
         return response()->json(['url' => $stripeCheckoutSession->url]);
     }
 
+    // Get data from Stripe about what user is doing
     public function webhook() {
         Stripe::setApiKey(getenv("STRIPE_SECRET"));
 
@@ -84,6 +88,7 @@ class StripeController extends Controller
 
         Log::debug($event);
 
+        // If a payment has succeedeed, insert product's data in database
         if ($event->type == "invoice.payment_succeeded") {
             $subscriptionId = $event->data->object->lines->data[0]->price->product;
             $name = Product::retrieve($subscriptionId)->name;
@@ -103,18 +108,19 @@ class StripeController extends Controller
             $userId = $event->data->object->metadata->user_id;
             $stripeCustomerId = $event->data->object->customer;
             
-            Payment::where('user_id', -1)->update(['user_id' => $userId]);
+            Payment::where('user_id', -1)->update(['user_id' => $userId]); // Link user ID with the previously inserted product in database
             $user = User::where('id', $userId)->first();
-            $user->update(['stripe_customer_id' => $stripeCustomerId]);
+            $user->update(['stripe_customer_id' => $stripeCustomerId]); // Add a Stripe customer ID to user in database
 
             $data = [
                 'mail' => "planetary@gmail.com",
                 'content' => "You have subscribed to a new planet ! Check out your user page for more informations."
             ];
     
-            Mail::to($user->email)->send(new Purchase($data));
+            Mail::to($user->email)->send(new Purchase($data)); // Send purchase confirmation mail to user
         }
 
+        // If user cancels a subscription, delete it from database and send an email to user
         if ($event->type == "customer.subscription.updated" && $event->data->object->cancel_at_period_end == true) {
             $subscriptionId = $event->data->object->items->data[0]->price->product;
             $userId = User::where("stripe_customer_id", $event->data->object->customer)->first()->id;
@@ -130,6 +136,7 @@ class StripeController extends Controller
             Mail::to($user->email)->send(new Suspension($data));
         }
 
+        // If user uncancels a subscription, insert it in database and send an email to user
         if ($event->type == "customer.subscription.updated" && $event->data->object->cancel_at_period_end == false) {
             
             $userId = User::where("stripe_customer_id", $event->data->object->customer)->first()->id;
@@ -219,10 +226,9 @@ class StripeController extends Controller
     }
 
     public function subscription($id) {
-        
-        Stripe::setApiKey(getenv("STRIPE_SECRET"));
-    
         try {
+            Stripe::setApiKey(getenv("STRIPE_SECRET"));
+            
             $product = Product::retrieve($id);
 
             $prices = Price::all(['product' => $product->id])->data;

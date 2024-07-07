@@ -45,9 +45,12 @@ class UserController extends Controller
      */
     public function modifyUser(Request $request)
     {
-        if ($request->name == null && $request->email == null && $request->password == null) { return response()->json(['Error' => "Empty credentials"], 422);
-    }
+        // Return an error if request is empty
+        if ($request->name == null && $request->email == null && $request->password == null) { 
+            return response()->json(['Error' => "Empty credentials"], 422); 
+        }
 
+        // Check data from request
         $request->validate([
             "name" => "string|nullable",
             "email" => "email|nullable",
@@ -56,17 +59,18 @@ class UserController extends Controller
 
         $user = User::find($request->id);
 
-        if (!$user) { return response()->json(['error' => "User does not exist"], 404); }
+        if (!$user) { return response()->json(['error' => "User does not exist"], 404); } // Return an error if user does not exist
 
+        // Update user info
         if (!empty($request->name)) { $user->name = $request->name; }
         if (!empty($request->email)) { $user->email = $request->email; }
         if (!empty($request->password)) { $user->password = Hash::make($request->password); }
 
         $user->save();
 
+        // Create another authentification token for user
         $user->tokens()->where("name", "client")->delete();
         $token = $user->createToken("client");
-
         $user->token = $token->plainTextToken;
 
         return response()->json($user, 200);
