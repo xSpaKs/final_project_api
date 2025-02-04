@@ -1,66 +1,90 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Planetary API - Backend (Laravel)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## Description
+Planetary API est l'API backend de l'application Planetary, développée avec Laravel. Elle fournit une API RESTful pour la gestion de l'authentification des utilisateurs, des paiements par Stripe, l'envoi d'emails de contact et plus encore.
 
-## About Laravel
+## Fonctionnalités
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- Gestion des utilisateurs : Création, modification et suppression des comptes utilisateurs.
+- Authentification : Connexion, déconnexion et inscription des utilisateurs avec Sanctum pour une authentification par token.
+- Intégration Stripe : Gestion des paiements, création de clients et gestion des abonnements via Stripe.
+- Gestion des emails : Envoi d'emails de contact à l'administrateur.
+- Actualités : Récupération et affichage des articles de news.
+- Paiements : Historique des paiements des utilisateurs.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Endpoints
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### Gestion des utilisateurs
 
-## Learning Laravel
+- POST /user - Récupérer les informations de l'utilisateur authentifié (nécessite une authentification)
+- POST /modify-user - Modifier les informations de l'utilisateur (nécessite une authentification)
+- POST /delete-account - Supprimer le compte utilisateur (nécessite une authentification)
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+### Authentification
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+- POST /register - Inscrire un nouvel utilisateur
+- POST /login - Connexion d'un utilisateur
+- POST /logout - Déconnexion d'un utilisateur (nécessite une authentification)
 
-## Laravel Sponsors
+### Email de contact
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+- POST /mail-contact - Envoyer un email de contact à l'administrateur
 
-### Premium Partners
+### Intégration Stripe
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+- POST /stripe/checkout - Créer une session de paiement Stripe (nécessite une authentification)
+- POST /stripe/customer - Créer un client Stripe (nécessite une authentification)
+- POST /stripe/webhook - Webhook Stripe pour traiter les événements de paiement
+- GET /stripe/subscriptions - Récupérer toutes les souscriptions
+- GET /stripe/subscriptions/{id} - Récupérer une souscription spécifique par ID
 
-## Contributing
+### Gestion des actualités
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+- GET /news - Récupérer tous les articles de news
+- GET /news/{id} - Récupérer un article de news spécifique par ID
 
-## Code of Conduct
+### Paiements
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+- POST /payments-from-user - Récupérer l'historique des paiements pour l'utilisateur authentifié (nécessite une authentification)
 
-## Security Vulnerabilities
+## Installation
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### Prérequis
+PHP 8.x
+Composer
+Laravel 9.x ou supérieur
 
-## License
+### Cloner le dépôt :
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+- git clone https://github.com/xSpaKs/final_project_api
+
+### Installer les dépendances :
+
+Allez dans le répertoire du projet et installez les dépendances via Composer :
+
+- cd final_project_api
+- composer install
+- Configurer les variables d'environnement dans le .env avec vos informations
+
+### Générer la clé de l'application :
+
+- php artisan key:generate
+
+### Exécuter les migrations :
+
+- php artisan migrate
+
+### Lancer le serveur API :
+
+- php artisan serve
+- L'API sera disponible à l'adresse http://localhost:8000.
+
+## Authentification
+Cette API utilise Sanctum pour l'authentification. Après la connexion, les utilisateurs recevront un token qui doit être passé dans l'en-tête Authorization sous forme de token Bearer pour les requêtes nécessitant une authentification.
+
+## Intégration Stripe
+Cette API utilise Stripe pour la gestion des abonnements et des paiements. Vous devez configurer vos clés API Stripe dans le fichier .env.
+
+## Webhook Stripe
+Stripe enverra des événements à votre URL de webhook pour les différents événements de paiement. Assurez-vous que votre point de terminaison webhook (/stripe/webhook) est bien configuré dans votre tableau de bord Stripe.
